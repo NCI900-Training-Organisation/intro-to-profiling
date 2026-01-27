@@ -29,3 +29,4 @@ C/C++ programs.
     tutorial/vtune.rst
     tutorial/valgrind.rst
     tutorial/hpctoolkit.rst
+    tutorial/nsys.rst

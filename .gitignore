@@ -176,3 +176,7 @@ job_scripts/hpctoolkit/*.o*
 job_scripts/hpctoolkit/*.e*
 job_scripts/hpctoolkit/hpctoolkit-*
 job_scripts/hpctoolkit/gmon.out
+job_scripts/nsys/*.o*
+job_scripts/nsys/*.e*
+job_scripts/nsys/*.nsys-rep*
+job_scripts/nsys/*.sqlite*
