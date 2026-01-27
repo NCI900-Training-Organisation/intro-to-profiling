@@ -20,7 +20,7 @@ First, load the necessary modules.
 ..  code-block:: bash
     :linenos:
 
-    mmodule load gcc/10.3.0
+    module load gcc/10.3.0
     module load cuda/12.9.0
 
 Then compile the matrix multiplication application with NVCC
@@ -75,7 +75,7 @@ Once launched you can explore the performance data using the various views and a
 
 
 
-.. image:: ../figs/nsys2.png
+.. image:: ../figs/nsys1.png
    :alt: Nsys
    :width: 600px
    :align: center
