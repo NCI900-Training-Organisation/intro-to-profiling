@@ -4,7 +4,7 @@ Intel VTune
 .. admonition:: Overview
    :class: Overview
 
-    * **Tutorial:** 30 min
+    * **Tutorial:** 45 min
 
         **Objectives:**
             #. Understand the basics of Intel Vtune and how to use it for profiling applications.

@@ -4,7 +4,7 @@ GProf
 .. admonition:: Overview
    :class: Overview
 
-    * **Tutorial:** 30 min
+    * **Tutorial:** 45 min
 
         **Objectives:**
             #. Understand the basics of GProf and how to use it for profiling applications.

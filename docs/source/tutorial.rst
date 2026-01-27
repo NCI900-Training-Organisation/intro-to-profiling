@@ -13,13 +13,29 @@ C/C++ programs.
     - Exercises
     - Duration
   * - Setup the Application
-    - 10 minutes
-    - 20 minutes
+    - 15 minutes
+    - 15 minutes
     - 30 minutes
   * - GProf
-    - 10 minutes
-    - 20 minutes
     - 30 minutes
+    - 15 minutes
+    - 45 minutes
+  * - Intel VTune
+    - 30 minutes
+    - 15 minutes
+    - 45 minutes
+  * - Valgrind
+    - 30 minutes
+    - 15 minutes
+    - 45 minutes
+  * - HPC Toolkit
+    - 30 minutes
+    - 15 minutes
+    - 45 minutes
+  * - Nsight Systems
+    - 30 minutes
+    - 15 minutes
+    - 45 minutes
 
 
 .. toctree::
