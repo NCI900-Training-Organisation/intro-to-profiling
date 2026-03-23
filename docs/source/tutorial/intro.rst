@@ -25,7 +25,34 @@ Build the LULESH application
     git clone https://github.com/LLNL/LULESH.git
 
     cd /scratch/vp91/$USER/intro-to-profiling/build_scripts
-    ./build_lulesh.sh /scratch/vp91/$USER/LULESH
+
+The run the following command to build the LULESH application with gprof enabled:
+
+..  code-block:: bash
+    :linenos:
+
+    ./build_lulesh_gprof.sh /scratch/vp91/$USER/LULESH
+
+For Intel Vtune use
+
+
+..  code-block:: bash
+    :linenos:
+
+    ./build_lulesh_vtune.sh /scratch/vp91/$USER/LULESH
+
+
+For HCPToolkit use
+
+
+..  code-block:: bash
+    :linenos:
+
+    ./build_lulesh_hpctoolkit.sh /scratch/vp91/$USER/LULESH
+
+
+
+
 
 Test the LULESH application
 ----------------------------
