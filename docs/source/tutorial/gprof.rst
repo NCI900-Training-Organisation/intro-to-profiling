@@ -15,8 +15,37 @@ It helps developers identify which parts of their code are consuming the most ex
 allowing them to optimize performance-critical sections. GProf works by collecting and analyzing 
 data about function calls and execution times during the program's runtime.
 
+First load the necessary modules to compile and run the application with gprof enabled.
 
-The cmake command used is
+..  code-block:: bash
+    :linenos:
+
+    module load gcc/10.3.0
+    module load openmpi/4.1.7
+    module load cuda/12.9.0
+    module load papi/7.1.0
+
+
+
+
+In this tutorial, we will use the **LULESH** application as an example to demonstrate how to use gprof for
+profiling. First, set the environment variables for the source and build directories
+
+..  code-block:: bash
+    :linenos:
+
+    export SRCDIR=/scratch/vp91/$USER/LULESH
+
+    export INSTALLDIR=/scratch/vp91/$USER/LULESH/build
+
+where 
+
+* ``INSTALLDIR`` is the directory where the application will be installed (build)
+
+* ``SRCDIR`` is the directory where the source code of the application is located (git repository)
+
+Then compile the application with gprof enabled using CMake. Use the following command to configure 
+the build:
 
 ..  code-block:: bash
     :linenos:
@@ -30,27 +59,12 @@ The cmake command used is
         -DCMAKE_CXX_FLAGS="-pg" \
         "$SRCDIR"
 
-where 
 
-* ``INSTALLDIR`` is the directory where the application will be installed (build)
-
-* ``SRCDIR`` is the directory where the source code of the application is located (git repository)
 
 * ``-DCMAKE_CXX_FLAGS="-pg"`` is used to enable profiling with gprof. 
 
 
-To run the application with gprof enabled load the following modules:
-
-
-..  code-block:: bash
-    :linenos:
-
-    module load gcc/10.3.0
-    module load openmpi/4.1.7
-    module load cuda/12.9.0
-    module load papi/7.1.0
-
-and then run the following command:   
+Now execute the following command to run the application and generate the profiling data:
 
 ..  code-block:: bash
     :linenos:
