@@ -30,9 +30,27 @@ The cmake command used is
         -DCMAKE_CXX_FLAGS="-pg" \
         "$SRCDIR"
 
-where ``-DCMAKE_CXX_FLAGS="-pg"`` is used to enable profiling with gprof. 
+where 
 
-To run the application with gprof enabled, use the following command:   
+* ``INSTALLDIR`` is the directory where the application will be installed (build)
+
+* ``SRCDIR`` is the directory where the source code of the application is located (git repository)
+
+* ``-DCMAKE_CXX_FLAGS="-pg"`` is used to enable profiling with gprof. 
+
+
+To run the application with gprof enabled load the following modules:
+
+
+..  code-block:: bash
+    :linenos:
+
+    module load gcc/10.3.0
+    module load openmpi/4.1.7
+    module load cuda/12.9.0
+    module load papi/7.1.0
+
+and then run the following command:   
 
 ..  code-block:: bash
     :linenos:
