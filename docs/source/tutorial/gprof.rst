@@ -15,7 +15,15 @@ It helps developers identify which parts of their code are consuming the most ex
 allowing them to optimize performance-critical sections. GProf works by collecting and analyzing 
 data about function calls and execution times during the program's runtime.
 
-First load the necessary modules to compile and run the application with gprof enabled.
+
+First, start an interactive job on the cluster 
+
+..  code-block:: bash
+    :linenos:
+
+    qsub -I -q normal -P vp91 -l walltime=02:00:00 -l ncpus=48 -l mem=192GB -l wd
+
+Then load the necessary modules to compile and run the application with gprof enabled.
 
 ..  code-block:: bash
     :linenos:
