@@ -9,6 +9,8 @@ Modules
     #. papi/7.1.0
     #. intel-mkl/2024.2.1
     #. intel-vtune/2024.2.1
+    #. hpctoolkit/2021.05.15
+    #. hpcviewer/2021.05.15
     #. cmake/3.8.2
 
 Modules are how we manage software in most HPC machines. We can see all the available modules using the command
