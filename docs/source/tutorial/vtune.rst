@@ -28,20 +28,22 @@ The cmake command used is:
         -DCMAKE_CXX_FLAGS="-g -O3 -fno-omit-frame-pointer" \
         "$SRCDIR"
 
-where ``-DCMAKE_CXX_FLAGS="-g -O3 -fno-omit-frame-pointer" `` is used to enable profiling with gprof. 
+where ``-DCMAKE_CXX_FLAGS="-g -O3 -fno-omit-frame-pointer"`` builds an optimised binary (``-O3``)
+that still contains debug symbols (``-g``) and keeps frame pointers (``-fno-omit-frame-pointer``), so
+VTune can attribute samples to source lines and reconstruct accurate call stacks.
 
 
-HotsPot Analysis
+Hotspot Analysis
 -------------------
 
-HotsPot analysis helps identify the most time-consuming functions in your application.
+Hotspot analysis helps identify the most time-consuming functions in your application.
 
 
 
 ..  code-block:: bash
     :linenos:
 
-    ./vtune -collect hotspots -result-dir vtune_hotspots mpirun -np 4 ./lulesh2.0 -s 20
+    vtune -collect hotspots -result-dir vtune_hotspots mpirun -np 4 ./lulesh2.0 -s 20
 
 This will generate a directory named ``vtune_hotspots`` in the current directory after the program completes.
 To analyze the profiling data, use the following command:   
@@ -148,7 +150,7 @@ After the program completes, analyze the profiling data with:
     vtune -report summary -result-dir vtune_hpc
 
 
-Memory Aceess
+Memory Access
 -------------------
 
 ..  code-block:: bash
@@ -172,14 +174,13 @@ To see the analysis in a GUI, you can launch the VTune GUI with the following co
 
 .. admonition:: Key Points
    :class: hint
-   
-    #. GProf is a performance analysis tool for Unix-like operating systems.
-    #. It helps identify performance bottlenecks in code by analyzing function calls and execution times
-    #. To use GProf with a C++ application, compile the code with the `-pg` flag.
-    #. Run the application to generate a `gmon.out` file.
-    #. Analyze the data using the `gprof` command.
-    #. Flat Profile section summarizes time spent in each function.
-    #. Call Graph section provides a detailed view of function calls and their relationships.
+
+    #. Intel VTune Profiler identifies performance bottlenecks in CPU usage, threading, and memory access.
+    #. Build with ``-g -O3 -fno-omit-frame-pointer`` so an optimised binary keeps debug symbols and frame pointers.
+    #. Use ``vtune -collect hotspots`` to find the most time-consuming functions.
+    #. Use ``vtune -collect hpc-performance`` for a detailed view of MPI + OpenMP parallel efficiency.
+    #. Use ``vtune -collect memory-access`` to analyse memory behaviour.
+    #. Summarise results with ``vtune -report summary``, or explore them in the GUI with ``vtune-gui``.
     
 
 

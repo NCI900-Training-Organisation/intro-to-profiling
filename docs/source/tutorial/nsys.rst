@@ -10,8 +10,9 @@ Nsight Systems
             #. Understand the basics of Nsight Systems and how to use it for profiling applications.
 
 
-Nsight Systems is a profiling tool for CUDA applications. It helps developers identify performance 
-bottlenecks in their CUDA kernels and applications.
+Nsight Systems is a system-wide performance analysis tool. It is widely used to profile CUDA
+applications, but it also traces CPU activity, OS runtime calls, and communication libraries such as
+MPI, giving a timeline view of how the whole application behaves and where the bottlenecks are.
 
 
 

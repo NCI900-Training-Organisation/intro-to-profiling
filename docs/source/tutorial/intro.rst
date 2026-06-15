@@ -10,10 +10,11 @@ Setup the Application
             #. Setup the application to be profiled.
 
 
-The application we are going to use LULESH (Livermore Unstructured Lagrangian Explicit Shock 
-Hydrodynamics). It is a proxy application that implements a Lagrangian hydrodynamics model for 
-simulating shock wave propagation in materials. The code is written in C++ and is parallelized 
-using MPI (Message Passing Interface) for distributed memory systems.
+The application we are going to use is LULESH (Livermore Unstructured Lagrangian Explicit Shock
+Hydrodynamics). It is a proxy application that implements a Lagrangian hydrodynamics model for
+simulating shock wave propagation in materials. The code is written in C++ and can be parallelized
+with MPI (Message Passing Interface) for distributed-memory systems and OpenMP for shared-memory
+parallelism (a CUDA version is also available). In this tutorial it is built with both MPI and OpenMP enabled.
 
 Build the LULESH application
 ----------------------------
@@ -26,7 +27,7 @@ Build the LULESH application
 
     cd /scratch/vp91/$USER/intro-to-profiling/build_scripts
 
-The run the following command to build the LULESH application with gprof enabled:
+Then run the following command to build the LULESH application with gprof enabled:
 
 ..  code-block:: bash
     :linenos:
@@ -65,7 +66,7 @@ Test the LULESH application
 ..  code-block:: bash
     :linenos:
 
-    cd /scratch/vp91/$USER/LULESH/build
+    cd /scratch/vp91/$USER/LULESH/build/gprof
     ./lulesh2.0 -s 20
 
 
@@ -76,7 +77,7 @@ Test the LULESH application
    :class: hint
    
     #. LULESH is a proxy application for simulating shock wave propagation in materials.
-    #. It is written in C++ and parallelized using MPI.
+    #. It is written in C++ and can be parallelized using MPI and OpenMP.
     #. The application can be built and tested on a high-performance computing cluster.
     
 
