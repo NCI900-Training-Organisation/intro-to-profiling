@@ -91,7 +91,7 @@ rank would otherwise overwrite a single ``gmon.out``.
 ..  code-block:: bash
     :linenos:
 
-    export GMON_OUT_PREFIX=/scratch/vp91/$USER/gmon.out
+    export GMON_OUT_PREFIX=$INSTALLDIR/gmon.out
 
     ./lulesh2.0 -s 20
 
@@ -109,7 +109,7 @@ If you set ``GMON_OUT_PREFIX``, pass the full prefixed name (including the PID) 
 ..  code-block:: bash
     :linenos:
 
-    gprof ./lulesh2.0 /scratch/vp91/$USER/gmon.out.<pid> > profile.txt
+    gprof ./lulesh2.0 $INSTALLDIR/gmon.out.<pid> > profile.txt
 
 This will create a file named ``profile.txt`` containing the profiling results, which can be
 viewed using any text editor or command-line tools like ``less`` or ``cat``.
