@@ -10,7 +10,7 @@ fi
 # 0. Input arguments
 # -------------------------------
 SRCDIR=$(realpath "$1")
-BUILDDIR=$SRCDIR/build
+BUILDDIR=$SRCDIR/build/hpctoolkit
 INSTALLDIR=$BUILDDIR/install
 
 # -------------------------------
