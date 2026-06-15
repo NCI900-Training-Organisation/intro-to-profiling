@@ -115,6 +115,33 @@ This will create a file named ``profile.txt`` containing the profiling results, 
 viewed using any text editor or command-line tools like ``less`` or ``cat``.
 
 
+Making the profile readable
+---------------------------
+
+The full ``profile.txt`` is hard to read with ``less`` or ``cat`` because gprof prints several pages
+of explanatory text between the tables. To get a clean view of just the hotspots, use ``gprof``
+directly with a couple of flags instead of dumping the whole file:
+
+..  code-block:: bash
+    :linenos:
+
+    gprof -b -p ./lulesh2.0 gmon.out | head -30
+
+* ``-b`` (brief) suppresses the long explanatory blurb that gprof prints between sections.
+
+* ``-p`` limits the output to the flat profile only (no call graph).
+
+* The flat profile is already sorted by self time, so piping to ``head -30`` shows the top
+  time-consuming functions first.
+
+If function names appear mangled (LULESH is C++), add ``-C`` / ``--demangle`` to print readable names:
+
+..  code-block:: bash
+    :linenos:
+
+    gprof -b -p -C ./lulesh2.0 gmon.out | head -30
+
+
 Flat Profile
 ----------------
 
