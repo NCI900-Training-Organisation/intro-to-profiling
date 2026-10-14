@@ -1,76 +1,46 @@
 #!/bin/bash
+# Build the optimised workshop executable, with debug information.
+# Load the workshop compiler, MPI, CMake and Ninja modules before running.
+# Keep that same compiler/MPI environment in the Jupyter kernel and batch jobs.
+# Run within a compute allocation; BUILD_JOBS must fit that allocation.
 set -euo pipefail
 
-if [ $# -lt 1 ]; then
-  echo "Usage: $0 <path-to-LULESH>"
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 <path-to-LULESH>" >&2
   exit 1
 fi
 
-# -------------------------------
-# 0. Input arguments
-# -------------------------------
 SRCDIR=$(realpath "$1")
 BUILDDIR=$SRCDIR/build/vtune
-INSTALLDIR=$BUILDDIR/install
+BUILD_JOBS=${BUILD_JOBS:-4}
+if ! [[ "$BUILD_JOBS" =~ ^[1-9][0-9]*$ ]]; then
+  echo "BUILD_JOBS must be a positive integer within your allocation." >&2
+  exit 1
+fi
+if [ ! -f "$SRCDIR/CMakeLists.txt" ]; then
+  echo "No CMakeLists.txt in $SRCDIR" >&2
+  exit 1
+fi
+for tool in cmake ninja mpicxx; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    echo "Missing $tool: load the workshop build modules first." >&2
+    exit 1
+  fi
+done
 
-# -------------------------------
-# 1. Load required modules
-# -------------------------------
-module purge
-module load gcc/10.3.0
-module load openmpi/4.1.7
-module load cuda/12.9.0
-module load papi/7.1.0
-module load intel-mkl/2024.2.1
-module load intel-vtune/2024.2.1
-module load cmake/3.8.2
-
-# -------------------------------
-# 2. Set compilers to MPI wrappers
-# -------------------------------
-export CC=mpicc
-export CXX=mpicxx
-export FC=mpif90
-
-# -------------------------------
-# 3. Set library prefixes
-# -------------------------------
-export CUDA_TOOLKIT_ROOT_DIR=/apps/cuda/12.9.0
-export CUPTI_PREFIX=/apps/cuda/12.9.0/extras/CUPTI
-export MKLROOT=/apps/intel-tools/intel-mkl/2024.2.1
-export PAPI_PREFIX=/apps/papi/7.1.0
-export ITT_PREFIX=/apps/intel-tools/intel-vtune/2024.2.1
-
-# -------------------------------
-# 4. Adjust library paths
-# -------------------------------
-export PATH=$CUDA_TOOLKIT_ROOT_DIR/bin:$PATH
-export LD_LIBRARY_PATH=$CUDA_TOOLKIT_ROOT_DIR/lib64:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$PAPI_PREFIX/lib:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$CUPTI_PREFIX/lib64:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$ITT_PREFIX/lib64:$LD_LIBRARY_PATH
-
-# -------------------------------
-# 5. Create build directory
-# -------------------------------
 mkdir -p "$BUILDDIR"
 cd "$BUILDDIR"
-
-# -------------------------------
-# 6. Run CMake configure
-# -------------------------------
 cmake -G Ninja \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-  -DMPI_CXX_COMPILER="$(which mpicxx)" \
+  -DCMAKE_CXX_COMPILER="$(command -v mpicxx)" \
+  -DMPI_CXX_COMPILER="$(command -v mpicxx)" \
   -DWITH_MPI=On \
   -DWITH_OPENMP=On \
-  -DCMAKE_INSTALL_PREFIX="$INSTALLDIR" \
-  -DCMAKE_CXX_FLAGS="-g -O3 -fno-omit-frame-pointer" \
+  -DWITH_SILO=Off \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=On \
+  -DCMAKE_CXX_FLAGS="" \
+  -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="-O3 -g -DNDEBUG -fno-omit-frame-pointer" \
   "$SRCDIR"
-
-# -------------------------------
-# 7. Build & install
-# -------------------------------
-ninja -j "$(nproc)"
-#ninja install
+cmake --build . --target lulesh2.0 -- -j "$BUILD_JOBS"
+test -x "$BUILDDIR/lulesh2.0"
+echo "Built $BUILDDIR/lulesh2.0"
