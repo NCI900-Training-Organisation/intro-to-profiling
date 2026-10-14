@@ -47,6 +47,10 @@ if "-report" in args:
     assert result.is_dir()
     print("TEST DOUBLE report for", result)
     sys.exit(0)
+# Simulate a host where Hotspots' default extra hardware insights fail.
+if "sampling-mode=sw" in args and "enable-characterization-insights=false" not in args:
+    print("TEST DOUBLE: extra hardware insights unavailable")
+    sys.exit(2)
 result = Path(str(result) + ".test-node")
 result.mkdir()
 (result / "test.vtune").write_text("test fixture")
@@ -106,6 +110,7 @@ print("Elapsed time = 1.0 (s)")
         for kind in ("hpc-performance", "memory-access"):
             record = self.lab.run(threads=1, analysis=kind)
             self.assertNotIn("sampling-mode=sw", record["command"])
+            self.assertNotIn("enable-characterization-insights=false", record["command"])
             self.assertEqual(len(result_dirs(record)), 1)
 
     def test_rejects_invalid_ranks_and_resource_overcommit(self):

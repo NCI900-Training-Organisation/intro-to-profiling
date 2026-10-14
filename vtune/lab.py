@@ -66,7 +66,10 @@ class Lab:
                 raise RuntimeError("Load the intel-vtune module before starting Jupyter")
             cmd += ["vtune", "-collect", analysis]
             if analysis == "hotspots":
-                cmd += ["-knob", "sampling-mode=sw"]
+                # Additional insights otherwise request hardware events even
+                # in software sampling mode, which can fail during PMU setup.
+                cmd += ["-knob", "sampling-mode=sw",
+                        "-knob", "enable-characterization-insights=false"]
             cmd += ["-trace-mpi", "-result-dir", str(result_prefix), "--"]
         cmd += [str(self.binary), "-s", str(self.size), "-i", str(self.iterations)]
         return cmd
