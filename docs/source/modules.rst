@@ -1,6 +1,33 @@
 Modules
 =======
 
+Intel VTune workshop
+--------------------
+
+For the ``vp91`` training, use the private ``lulesh`` module containing the
+prebuilt MPI/OpenMP application:
+
+.. code-block:: bash
+
+   module load lulesh
+   module load intel-vtune/2024.2.1
+   command -v lulesh2.0 mpirun vtune
+
+Use the instructor-confirmed VTune version. The ``lulesh`` module supplies the
+matching runtime dependencies. Participants do not need CMake or Ninja.
+
+In ARE, enter ``lulesh intel-vtune/2024.2.1`` in **Advanced options → Modules**
+before launching the 12-core, single-node JupyterLab session. If necessary,
+enter the instructor's private modulefile directory in **Module directories**.
+Mount ``scratch/vp91`` and any storage containing the module and application.
+The module should set ``LULESH_SOURCE`` to its matching source directory.
+
+Other tutorial modules
+----------------------
+
+The following versions are examples used across the broader profiling
+materials. They are not a list of modules participants must load for VTune.
+
 .. note::
     
     #. gcc/10.3.0

@@ -129,18 +129,29 @@ def result_dirs(record):
     return found
 
 
-def report(record, kind="summary"):
-    """Print and retain one text report for every result in a collection."""
+def report(record, kind="summary", *, full=False):
+    """Print and save reports; Hotspots defaults to ten rows and CPU self time.
+
+    Use full=True for all Hotspots columns and rows from the existing result.
+    Compact and full reports are saved separately; summaries are unchanged.
+    """
     if kind not in ("summary", "hotspots"):
         raise ValueError("Use a summary or hotspots report")
     for result in result_dirs(record):
         cmd = ["vtune", "-report", kind, "-result-dir", str(result)]
+        name = kind
         if kind == "hotspots":
             cmd += ["-group-by", "function"]
+            if not full:
+                # Function grouping retains Function and Module automatically.
+                # "CPU Time" alone would also select its many submetrics.
+                cmd += ["-column", "CPU Time:Self", "-sort-desc", "CPU Time:Self",
+                        "-limit", "10"]
+                name = "hotspots-compact"
         print(shlex.join(cmd), flush=True)
         completed = subprocess.run(cmd, text=True, stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT, check=False)
-        destination = result.parent / f"{result.name}-{kind}.txt"
+        destination = result.parent / f"{result.name}-{name}.txt"
         destination.write_text(completed.stdout)
         print(completed.stdout)
         if completed.returncode:

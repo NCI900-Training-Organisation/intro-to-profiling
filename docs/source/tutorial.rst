@@ -12,10 +12,10 @@ C/C++ programs.
     - Material
     - Exercises
     - Duration
-  * - Setup the Application
-    - 15 minutes
-    - 15 minutes
-    - 30 minutes
+  * - Setup the Application (prebuilt LULESH module)
+    - 5 minutes
+    - 5 minutes
+    - 10 minutes
   * - GProf
     - 30 minutes
     - 15 minutes
