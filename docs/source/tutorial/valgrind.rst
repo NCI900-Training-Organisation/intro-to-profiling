@@ -4,16 +4,17 @@ Valgrind
 .. admonition:: Overview
    :class: Overview
 
-    * **Tutorial:** 45 min
+    * **Tutorial:** 60 min
 
         **Objectives:**
-            #. Understand the basics of Valgrind and how to use it for profiling applications.
+            #. Use Memcheck to find invalid memory operations, uninitialized values, and memory leaks.
+            #. Use Callgrind, Cachegrind, and Massif to inspect program execution and memory use.
 
 
 
-Valgrind is a programming tool for memory debugging, memory leak detection, and profiling. It helps developers 
-identify memory-related issues in their applications, such as memory leaks, uninitialized memory reads, and 
-invalid memory accesses. 
+Valgrind is a suite of tools for debugging and profiling programs. This tutorial uses Memcheck to find memory
+errors and leaks, then introduces Callgrind, Cachegrind, and Massif for profiling function costs, cache behavior,
+and heap usage. The examples are small C programs so that each report is easy to interpret.
 
 First, start an interactive job on the cluster 
 
@@ -259,11 +260,165 @@ Sample output will be similar to:
     ==384913==    still reachable: 200 bytes in 1 blocks
     ==384913==         suppressed: 0 bytes in 0 blocks
 
+Memcheck: invalid accesses and uninitialized values
+----------------------------------------------------
+
+Memcheck also detects invalid reads and writes, use-after-free, double-free, invalid frees, and uses of
+uninitialized values. Build the examples with debug information and without optimization so reports point to
+useful source locations:
+
+..  code-block:: bash
+    :linenos:
+
+    gcc -g -O0 6_invalid_access.c -o 6_invalid_access
+    gcc -g -O0 10_invalid_operations.c -o 10_invalid_operations
+    gcc -g -O0 7_uninitialized.c -o 7_uninitialized
+
+The invalid-access example writes one element beyond a heap allocation. Run it, then run each invalid-operation
+scenario separately and inspect the error description and source lines in the stack trace:
+
+..  code-block:: bash
+    :linenos:
+
+    valgrind ./6_invalid_access
+    valgrind ./10_invalid_operations use-after-free
+    valgrind ./10_invalid_operations double-free
+    valgrind ./10_invalid_operations invalid-free
+
+The ``bounds`` scenario writes past the end of a heap allocation. The other scenarios read freed storage, free
+the same allocation twice, or pass a stack address to ``free``. These programs intentionally contain errors;
+do not use them as examples of production code.
+
+An uninitialized value is reported when the program uses it, for example in a conditional branch. Ask Memcheck
+to track where the value originated:
+
+..  code-block:: bash
+    :linenos:
+
+    valgrind --track-origins=yes ./7_uninitialized
+
+``--track-origins=yes`` adds origin information to undefined-value reports and can make the run slower. Follow
+the first relevant application stack frame back to the source, initialize or otherwise correct the value, and
+rerun Memcheck to verify the report is gone.
+
+Diagnose, fix, and verify
+-------------------------
+
+Use a full leak report to locate the allocation site in the intentionally leaking example:
+
+..  code-block:: bash
+    :linenos:
+
+    valgrind --leak-check=full ./1_leak
+
+The report's ``by`` frames show the application call path and source line when debug information is available.
+Compare it with the corrected version, which releases the allocation:
+
+..  code-block:: bash
+    :linenos:
+
+    gcc -g -O0 9_leak_fixed.c -o 9_leak_fixed
+    valgrind --leak-check=full --error-exitcode=1 ./9_leak_fixed
+
+The corrected program should finish without Memcheck errors. ``--error-exitcode=1`` makes Valgrind return a
+nonzero status when it reports an error, which is useful in scripts and CI. To make leak kinds count as errors,
+specify them explicitly:
+
+..  code-block:: bash
+    :linenos:
+
+    valgrind --leak-check=full --errors-for-leak-kinds=definite,possible \
+        --error-exitcode=1 ./1_leak
+
+Suppressions
+------------
+
+Suppression files can silence known reports from external libraries when those reports are understood and
+unavoidable. First ask Valgrind to print candidate suppression blocks:
+
+..  code-block:: bash
+    :linenos:
+
+    valgrind --gen-suppressions=all ./your_program
+
+Review a candidate carefully, copy the relevant block into a text file such as ``project.supp``, then pass it
+back to Valgrind:
+
+..  code-block:: bash
+    :linenos:
+
+    valgrind --suppressions=project.supp ./your_program
+
+Do not suppress reports from your own code just to make the output clean. Fix those errors instead, and keep
+suppression files small and documented.
+
+Callgrind: function costs and call relationships
+------------------------------------------------
+
+Callgrind records function call relationships and instruction costs. Compile the sample workload and collect a
+profile:
+
+..  code-block:: bash
+    :linenos:
+
+    gcc -g -O0 8_profile_workload.c -o 8_profile_workload
+    valgrind --tool=callgrind ./8_profile_workload
+
+Callgrind writes a file named ``callgrind.out.<pid>``. Replace ``<pid>`` with the number in the generated
+filename, then inspect the profile in the terminal or open it in KCachegrind if that viewer is installed:
+
+..  code-block:: bash
+    :linenos:
+
+    callgrind_annotate --auto=yes callgrind.out.<pid>
+    kcachegrind callgrind.out.<pid>
+
+Use the annotated output or call graph to find functions with high instruction costs and understand which
+callers contribute to them. Callgrind's instruction counts are useful for comparing work, but are not wall-clock
+timings.
+
+Cachegrind: instruction and cache behavior
+------------------------------------------
+
+Cachegrind records instruction counts and simulated cache events. Run the same workload and annotate the
+result:
+
+..  code-block:: bash
+    :linenos:
+
+    valgrind --tool=cachegrind --cachegrind-out-file=cachegrind.out ./8_profile_workload
+    cg_annotate --auto=yes cachegrind.out
+
+Inspect instruction counts and cache read/write misses, then use source annotations to find where they occur.
+Cachegrind's cache behavior is simulated; it is not a direct measurement of the machine's live hardware counters.
+
+Massif: heap usage over time
+----------------------------
+
+Massif samples heap allocation over the program's execution. Collect and print a report:
+
+..  code-block:: bash
+    :linenos:
+
+    valgrind --tool=massif --massif-out-file=massif.out ./8_profile_workload
+    ms_print massif.out
+
+Read the graph and snapshots to find when heap use peaks, then inspect the allocation tree around that point.
+Massif profiles heap allocations; it does not replace Memcheck for finding invalid accesses or leaks.
+
+Running Valgrind effectively
+---------------------------
+
+Valgrind adds substantial runtime and memory overhead. Use a small, representative input while learning, and do
+not treat Valgrind timings as native performance measurements. The available tools and supported CPU
+architectures depend on the installed Valgrind build; on a cluster, run within an allocated job and follow the
+site's software and resource policies.
+
 .. admonition:: Key Points
    :class: hint
 
-    #. Valgrind is a programming tool for memory debugging, memory leak detection, and profiling.
-    #. It helps identify memory-related issues in applications, such as memory leaks and invalid memory accesses.
-    #. Compile code with debugging information using the `-g` flag to get detailed reports from Valgrind.
-    #. Run Valgrind with the `--leak-check=full` option to see detailed information about memory leaks.
-    #. Understand the different types of memory leaks reported by Valgrind: definitely lost, indirectly lost, possibly lost, and still reachable.
+    #. Memcheck detects invalid memory operations, uninitialized values, and memory leaks.
+    #. Compile with ``-g`` and use ``--track-origins=yes`` when tracking the source of an uninitialized value.
+    #. Use ``--leak-check=full`` and interpret the stack trace to locate allocation sites.
+    #. Callgrind profiles function call costs, Cachegrind reports instruction and simulated cache events, and Massif tracks heap use.
+    #. Valgrind runs have significant overhead; use representative inputs and do not use them for native timing comparisons.
