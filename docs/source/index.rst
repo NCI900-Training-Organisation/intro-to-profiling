@@ -14,8 +14,8 @@ Contents
 .. toctree::
    :maxdepth: 1
 
-   prerequisite
-   outcomes
-   modules
-   tutorial
-   references
+   01-prerequisite
+   02-outcomes
+   03-modules
+   04-tutorial
+   05-references

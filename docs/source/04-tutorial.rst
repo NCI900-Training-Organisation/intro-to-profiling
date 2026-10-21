@@ -8,9 +8,9 @@ C/C++ programs.
 .. toctree::
     :maxdepth: 1
 
-    tutorial/intro.rst
-    tutorial/gprof.rst
-    tutorial/vtune.rst
-    tutorial/valgrind.rst
-    tutorial/hpctoolkit.rst
-    tutorial/nsys.rst
+    tutorial/01-intro.rst
+    tutorial/02-gprof.rst
+    tutorial/03-vtune.rst
+    tutorial/04-valgrind.rst
+    tutorial/05-hpctoolkit.rst
+    tutorial/06-nsys.rst
