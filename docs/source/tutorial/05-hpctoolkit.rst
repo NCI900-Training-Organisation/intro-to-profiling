@@ -32,8 +32,8 @@ Now we will run LULESH with HPC Toolkit to collect performance data. Use the fol
 ..  code-block:: bash
     :linenos:
 
-    cd /scratch/vp91/$USER/intro-to-profiling/job_scripts/hpctoolkit/
-    qsub 1_lulesh.pbs
+    cd /scratch/vp91/$USER/intro-to-profiling/job_scripts/05-hpctoolkit/
+    qsub 01-lulesh.pbs
 
 The job script runs the application under ``hpcrun``, which samples the execution and writes a
 measurements directory named ``hpctoolkit-lulesh2.0-measurements-*``. (For source-level attribution

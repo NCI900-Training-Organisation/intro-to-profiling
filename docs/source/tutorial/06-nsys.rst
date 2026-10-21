@@ -52,9 +52,9 @@ or submit the job script
 ..  code-block:: bash
     :linenos:
 
-    cd /scratch/vp91/$USER/intro-to-profiling/job_scripts/nsys
+    cd /scratch/vp91/$USER/intro-to-profiling/job_scripts/06-nsys
 
-    qsub 1_matmul.pbs
+    qsub 01-matmul.pbs
 
 This will generate a report file with the extension `.nsys-rep`.
 
