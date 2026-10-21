@@ -52,7 +52,7 @@ or submit the job script
 ..  code-block:: bash
     :linenos:
 
-    cd /scratch/vp91/$USER/intro-to-profiling/job_scripts/06-nsys
+    cd /scratch/vp91/$USER/intro-to-profiling/job-scripts/06-nsys
 
     qsub 01-matmul.pbs
 

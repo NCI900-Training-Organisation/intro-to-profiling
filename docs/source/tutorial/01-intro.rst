@@ -25,7 +25,7 @@ Build the LULESH application
     cd /scratch/vp91/$USER
     git clone https://github.com/LLNL/LULESH.git
 
-    cd /scratch/vp91/$USER/intro-to-profiling/build_scripts
+    cd /scratch/vp91/$USER/intro-to-profiling/build-scripts
 
 Then run the following command to build the LULESH application with gprof enabled:
 

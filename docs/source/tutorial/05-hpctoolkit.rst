@@ -23,7 +23,7 @@ Build the application LULESH using the following command:
     cd /scratch/vp91/$USER
     git clone https://github.com/LLNL/LULESH.git
 
-    cd /scratch/vp91/$USER/intro-to-profiling/build_scripts
+    cd /scratch/vp91/$USER/intro-to-profiling/build-scripts
     ./05-build-lulesh-hpctoolkit.sh /scratch/vp91/$USER/LULESH
 
 
@@ -32,7 +32,7 @@ Now we will run LULESH with HPC Toolkit to collect performance data. Use the fol
 ..  code-block:: bash
     :linenos:
 
-    cd /scratch/vp91/$USER/intro-to-profiling/job_scripts/05-hpctoolkit/
+    cd /scratch/vp91/$USER/intro-to-profiling/job-scripts/05-hpctoolkit/
     qsub 01-lulesh.pbs
 
 The job script runs the application under ``hpcrun``, which samples the execution and writes a
