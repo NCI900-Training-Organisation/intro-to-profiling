@@ -31,7 +31,7 @@ Then compile the matrix multiplication application with NVCC
 
     cd /scratch/vp91/$USER/intro-to-profiling/code/nsys
 
-    nvcc -O0 -g tiled_matmul_multikernel.cu -o tiled_matmul
+    nvcc -O0 -g 01-tiled-matmul-multikernel.cu -o tiled_matmul
 
 * `-g` enables debugging information.
 * `-O0` disables optimizations to make debugging easier.

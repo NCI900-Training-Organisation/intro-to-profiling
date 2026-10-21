@@ -33,7 +33,7 @@ Heading level 7 (Lowest level)
 Add Imgaes
 -----------------
 
-.. image:: ../figs/performance.png
+.. image:: figs/hpcviewer.png
 
 
 Bullets
@@ -89,9 +89,10 @@ Exercise
 .. admonition:: Exercise
    :class: todo
 
-    1. Examine the program *src/distributed_data_parallel.py*. What the changes from data_parallel.ipynb?
-    2. Examine the job script *job_scripts/distributed_data_parallel.pbs*.
-    3. Run the program using the job script *job_scripts/distributed_data_parallel.pbs*.
+    1. Examine *code/valgrind/01-leak.c* and *code/valgrind/09-leak_fixed.c*.
+       How does the corrected program release its allocation?
+    2. Open *notebooks/03-valgrind.ipynb*.
+    3. Run the leak examples and compare their Memcheck reports.
 
 
 Key Points
