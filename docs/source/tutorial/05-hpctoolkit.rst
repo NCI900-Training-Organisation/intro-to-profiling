@@ -24,7 +24,7 @@ Build the application LULESH using the following command:
     git clone https://github.com/LLNL/LULESH.git
 
     cd /scratch/vp91/$USER/intro-to-profiling/build_scripts
-    ./build_lulesh_hpctoolkit.sh /scratch/vp91/$USER/LULESH
+    ./05-build-lulesh-hpctoolkit.sh /scratch/vp91/$USER/LULESH
 
 
 Now we will run LULESH with HPC Toolkit to collect performance data. Use the following PBS job script to submit the job:

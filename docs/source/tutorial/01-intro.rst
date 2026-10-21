@@ -32,7 +32,7 @@ Then run the following command to build the LULESH application with gprof enable
 ..  code-block:: bash
     :linenos:
 
-    ./build_lulesh_gprof.sh /scratch/vp91/$USER/LULESH
+    ./02-build-lulesh-gprof.sh /scratch/vp91/$USER/LULESH
 
 For Intel Vtune use
 
@@ -40,7 +40,7 @@ For Intel Vtune use
 ..  code-block:: bash
     :linenos:
 
-    ./build_lulesh_vtune.sh /scratch/vp91/$USER/LULESH
+    ./03-build-lulesh-vtune.sh /scratch/vp91/$USER/LULESH
 
 
 For HCPToolkit use
@@ -49,7 +49,7 @@ For HCPToolkit use
 ..  code-block:: bash
     :linenos:
 
-    ./build_lulesh_hpctoolkit.sh /scratch/vp91/$USER/LULESH
+    ./05-build-lulesh-hpctoolkit.sh /scratch/vp91/$USER/LULESH
 
 
 
