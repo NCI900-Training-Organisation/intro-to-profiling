@@ -4,8 +4,9 @@ struct S {
     int *data;
 };
 
-int main() {
+int main() 
+{
     struct S *s = malloc(sizeof(struct S));
     s->data = malloc(10 * sizeof(int));
-    return 0;          // s leaked s->data is indirectly lost
+    return 0; // s leaked s->data is indirectly lost
 }

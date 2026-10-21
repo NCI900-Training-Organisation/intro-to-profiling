@@ -1,13 +1,10 @@
 #include <stdlib.h>
 
-int main(void)
-{
-    int *values = malloc(10 * sizeof(*values));
-    if (values == NULL) {
-        return 1;
-    }
 
-    values[0] = 42;
-    free(values);
-    return 0;
+int main() 
+{
+    int *p = malloc(10 * sizeof(int));
+    p[0] = 42;
+    free(p);
+    return 0;   
 }

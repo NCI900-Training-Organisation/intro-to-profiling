@@ -2,7 +2,8 @@
 
 int *global;
 
-int main() {
+int main() 
+{
     global = malloc(100);
     return 0;          // memory still reachable via global
 }

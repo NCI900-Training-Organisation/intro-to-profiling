@@ -2,10 +2,7 @@
 
 int main(void)
 {
-    int *value = malloc(sizeof(*value));
-    if (value == NULL) {
-        return 1;
-    }
+    int *value = malloc(sizeof(int));
 
     if (*value == 7) {
         *value = 0;

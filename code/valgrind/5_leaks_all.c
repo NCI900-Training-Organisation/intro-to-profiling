@@ -10,7 +10,8 @@ struct Node {
     int *data;
 };
 
-int main(void) {
+int main(void) 
+{
 
     /* Definitely lost */
     int *def = malloc(10 * sizeof(int));
