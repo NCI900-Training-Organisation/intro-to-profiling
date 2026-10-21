@@ -21,7 +21,6 @@ First, start an interactive job on the cluster
 
 
 ..  code-block:: bash
-    :linenos:
 
     qsub -I -q normal -P vp91 -l walltime=02:00:00 -l ncpus=48 -l mem=192GB -l wd
 
@@ -29,7 +28,6 @@ First, start an interactive job on the cluster
 and load the necessary modules.
 
 ..  code-block:: bash
-    :linenos:
 
     module load gcc/15.1.0
 
@@ -41,10 +39,9 @@ Run Valgrind to detect memory leaks
 Compile the code with debugging information
 
 ..  code-block:: bash
-    :linenos:
 
     cd /scratch/vp91/$USER/intro-to-profiling/code/valgrind
-    gcc -g -O0 1_leak.c -o 1_leak
+    gcc -g -O0 01-leak.c -o 01-leak
 
 * `-g` enables debugging information.
 * `-O0` disables optimizations to make debugging easier.
@@ -52,9 +49,8 @@ Compile the code with debugging information
 Now run the program with Valgrind to check for memory leaks
 
 ..  code-block:: bash
-    :linenos:
 
-    valgrind ./1_leak
+    valgrind ./01-leak
 
 This will produce output indicating any memory leaks detected in the program. Look for lines that mention 
 "definitely lost" to identify memory that was allocated but not freed.
@@ -62,7 +58,6 @@ This will produce output indicating any memory leaks detected in the program. Lo
 Sample output will be similar to:
 
 ..  code-block:: bash
-    :linenos:
 
     ==384063== HEAP SUMMARY:
     ==384063==     in use at exit: 40 bytes in 1 blocks
@@ -94,23 +89,20 @@ Indirect leak example
 Compile the code with debugging information
 
 ..  code-block:: bash
-    :linenos:
 
     cd /scratch/vp91/$USER/intro-to-profiling/code/valgrind
 
-    gcc -g -O0 2_indirect.c -o 2_indirect
+    gcc -g -O0 02-indirect.c -o 02-indirect
 
 and run Valgrind
 
 ..  code-block:: bash
-    :linenos:
 
-    valgrind ./2_indirect
+    valgrind ./02-indirect
 
 Sample output will be similar to:
 
 ..  code-block:: bash
-    :linenos:
 
     ==384410== HEAP SUMMARY:
     ==384410==     in use at exit: 48 bytes in 2 blocks
@@ -130,25 +122,22 @@ Possibly lost example
 Compile the code with debugging information
 
 ..  code-block:: bash
-    :linenos:
 
     cd /scratch/vp91/$USER/intro-to-profiling/code/valgrind
 
-    gcc -g -O0 3_possible.c -o 3_possible
+    gcc -g -O0 03-possible.c -o 03-possible
 
 
 run Valgrind
 
 ..  code-block:: bash
-    :linenos:
 
-    valgrind ./3_possible
+    valgrind ./03-possible
 
 
 Sample output will be similar to:
 
 ..  code-block:: bash
-    :linenos:
     
     ==384772== HEAP SUMMARY:
     ==384772==     in use at exit: 100 bytes in 1 blocks
@@ -185,23 +174,20 @@ Still reachable example
 Comnpile the code with debugging information
 
 ..  code-block:: bash
-    :linenos:
 
     cd /scratch/vp91/$USER/intro-to-profiling/code/valgrind
 
-    gcc -g -O0 4_still_reachable.c -o 4_still_reachable
+    gcc -g -O0 04-still_reachable.c -o 04-still_reachable
 
 Run Valgrind
 
 ..  code-block:: bash
-    :linenos:
 
-    valgrind ./4_still_reachable
+    valgrind ./04-still_reachable
 
 Sample output will be similar to:
 
 ..  code-block:: bash
-    :linenos:
 
 
     ==384651== HEAP SUMMARY:
@@ -222,18 +208,16 @@ Detailed leak report
 To see more details about the leaks, rerun Valgrind with the `--leak-check=full` option:
 
 ..  code-block:: bash
-    :linenos:
 
     cd /scratch/vp91/$USER/intro-to-profiling/code/valgrind
-    gcc -g -O0 5_leaks_all.c -o 5_leaks_all
+    gcc -g -O0 05-leaks_all.c -o 05-leaks_all
 
 
 Run Valgrind
 
 ..  code-block:: bash
-    :linenos:
 
-    valgrind --leak-check=full --show-leak-kinds=all ./5_leaks_all
+    valgrind --leak-check=full --show-leak-kinds=all ./05-leaks_all
 
 
 * **--leak-check=full**: provides detailed information about each memory leak.
@@ -243,7 +227,6 @@ Run Valgrind
 Sample output will be similar to:
 
 ..  code-block:: bash
-    :linenos:
 
     ==384913== HEAP SUMMARY:
     ==384913==     in use at exit: 428 bytes in 5 blocks
@@ -251,23 +234,23 @@ Sample output will be similar to:
     ==384913==
     ==384913== 40 bytes in 1 blocks are definitely lost in loss record 1 of 5
     ==384913==    at 0x4C39185: malloc (vg_replace_malloc.c:442)
-    ==384913==    by 0x400617: main (5_leak_all.c:16)
+    ==384913==    by 0x400617: main (05-leaks_all.c:16)
     ==384913==
     ==384913== 80 bytes in 1 blocks are indirectly lost in loss record 2 of 5
     ==384913==    at 0x4C39185: malloc (vg_replace_malloc.c:442)
-    ==384913==    by 0x400633: main (5_leak_all.c:21)
+    ==384913==    by 0x400633: main (05-leaks_all.c:21)
     ==384913==
     ==384913== 88 (8 direct, 80 indirect) bytes in 1 blocks are definitely lost in loss record 3 of 5
     ==384913==    at 0x4C39185: malloc (vg_replace_malloc.c:442)
-    ==384913==    by 0x400625: main (5_leak_all.c:20)
+    ==384913==    by 0x400625: main (05-leaks_all.c:20)
     ==384913==
     ==384913== 100 bytes in 1 blocks are possibly lost in loss record 4 of 5
     ==384913==    at 0x4C39185: malloc (vg_replace_malloc.c:442)
-    ==384913==    by 0x400647: main (5_leak_all.c:25)
+    ==384913==    by 0x400647: main (05-leaks_all.c:25)
     ==384913==
     ==384913== 200 bytes in 1 blocks are still reachable in loss record 5 of 5
     ==384913==    at 0x4C39185: malloc (vg_replace_malloc.c:442)
-    ==384913==    by 0x400664: main (5_leak_all.c:30)
+    ==384913==    by 0x400664: main (05-leaks_all.c:30)
     ==384913==
     ==384913== LEAK SUMMARY:
     ==384913==    definitely lost: 48 bytes in 2 blocks
@@ -282,32 +265,30 @@ Invalid accesses
 Memcheck also detects invalid reads and writes.
 
 ..  code-block:: bash
-    :linenos:
 
-    gcc -g -O0 6_invalid_access.c -o 6_invalid_access
-    valgrind ./6_invalid_access
+    gcc -g -O0 06-invalid_access.c -o 06-invalid_access
+    valgrind ./06-invalid_access
 
 Sample output will be similar to:
 
 ..  code-block:: bash
-    :linenos:
 
     ==1872382== Memcheck, a memory error detector
     ==1872382== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
     ==1872382== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info
-    ==1872382== Command: ./6_invalid_access
+    ==1872382== Command: ./06-invalid_access
     ==1872382== 
     ==1872382== Invalid write of size 4
-    ==1872382==    at 0x400674: main (6_invalid_access.c:7)
+    ==1872382==    at 0x400674: main (06-invalid_access.c:7)
     ==1872382==  Address 0x5222048 is 0 bytes after a block of size 8 alloc'd
     ==1872382==    at 0x4C39185: malloc (vg_replace_malloc.c:442)
-    ==1872382==    by 0x400667: main (6_invalid_access.c:5)
+    ==1872382==    by 0x400667: main (06-invalid_access.c:5)
     ==1872382== 
     ==1872382== Invalid read of size 4
-    ==1872382==    at 0x40067E: main (6_invalid_access.c:8)
+    ==1872382==    at 0x40067E: main (06-invalid_access.c:8)
     ==1872382==  Address 0x5222048 is 0 bytes after a block of size 8 alloc'd
     ==1872382==    at 0x4C39185: malloc (vg_replace_malloc.c:442)
-    ==1872382==    by 0x400667: main (6_invalid_access.c:5)
+    ==1872382==    by 0x400667: main (06-invalid_access.c:5)
     ==1872382== 
     ==1872382== 
     ==1872382== HEAP SUMMARY:
@@ -329,23 +310,21 @@ to track where the value originated:
 
 
 ..  code-block:: bash
-    :linenos:
 
-    gcc -g -O0 7_uninitialized.c -o 7_uninitialized
-    valgrind ./7_uninitialized
+    gcc -g -O0 07-uninitialized.c -o 07-uninitialized
+    valgrind ./07-uninitialized
 
 Sample output will be similar to:
 
 ..  code-block:: bash
-    :linenos:
 
     ==1872478== Memcheck, a memory error detector
     ==1872478== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
     ==1872478== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info
-    ==1872478== Command: ./7_uninitialized
+    ==1872478== Command: ./07-uninitialized
     ==1872478== 
     ==1872478== Conditional jump or move depends on uninitialised value(s)
-    ==1872478==    at 0x400675: main (7_uninitialized.c:7)
+    ==1872478==    at 0x400675: main (07-uninitialized.c:7)
     ==1872478== 
     ==1872478== 
     ==1872478== HEAP SUMMARY:
@@ -364,9 +343,8 @@ the first relevant application stack frame back to the source, initialize or oth
 rerun Memcheck to verify the report is gone.
 
 ..  code-block:: bash
-    :linenos:
 
-    valgrind --track-origins=yes ./7_uninitialized
+    valgrind --track-origins=yes ./07-uninitialized
 
 
 Invalid operations
@@ -377,18 +355,16 @@ Memcheck detects invalid memory operations, such as writing past the end of an a
 freeing the same allocation twice, or passing a stack address to ``free``. 
 
 ..  code-block:: bash
-    :linenos:
 
-    gcc -g -O0 8_invalid_operations.c -o 8_invalid_operations
+    gcc -g -O0 08-invalid_operations.c -o 08-invalid_operations
 
 The scenarios read freed storage, free the same allocation twice, or pass a stack address to ``free``. 
 
 ..  code-block:: bash
-    :linenos:
 
-    valgrind ./8_invalid_operations use-after-free
-    valgrind ./8_invalid_operations double-free
-    valgrind ./8_invalid_operations invalid-free
+    valgrind ./08-invalid_operations use-after-free
+    valgrind ./08-invalid_operations double-free
+    valgrind ./08-invalid_operations invalid-free
 
 
 
@@ -399,28 +375,25 @@ Diagnose, fix, and verify
 Use a full leak report to locate the allocation site in the intentionally leaking example:
 
 ..  code-block:: bash
-    :linenos:
 
-    valgrind --leak-check=full ./1_leak
+    valgrind --leak-check=full ./01-leak
 
 The report's ``by`` frames show the application call path and source line when debug information is available.
 Compare it with the corrected version, which releases the allocation:
 
 ..  code-block:: bash
-    :linenos:
 
-    gcc -g -O0 9_leak_fixed.c -o 9_leak_fixed
-    valgrind --leak-check=full --error-exitcode=1 ./9_leak_fixed
+    gcc -g -O0 09-leak_fixed.c -o 09-leak_fixed
+    valgrind --leak-check=full --error-exitcode=1 ./09-leak_fixed
 
 The corrected program should finish without Memcheck errors. ``--error-exitcode=1`` makes Valgrind return a
 nonzero status when it reports an error, which is useful in scripts and CI. To make leak kinds count as errors,
 specify them explicitly:
 
 ..  code-block:: bash
-    :linenos:
 
     valgrind --leak-check=full --errors-for-leak-kinds=definite,possible \
-        --error-exitcode=1 ./1_leak
+        --error-exitcode=1 ./01-leak
 
 Suppressions
 ------------
@@ -429,7 +402,6 @@ Suppression files can silence known reports from external libraries when those r
 unavoidable. First ask Valgrind to print candidate suppression blocks:
 
 ..  code-block:: bash
-    :linenos:
 
     valgrind --gen-suppressions=all ./your_program
 
@@ -437,7 +409,6 @@ Review a candidate carefully, copy the relevant block into a text file such as `
 back to Valgrind:
 
 ..  code-block:: bash
-    :linenos:
 
     valgrind --suppressions=project.supp ./your_program
 
@@ -451,16 +422,14 @@ Callgrind records function call relationships and instruction costs. Compile the
 profile:
 
 ..  code-block:: bash
-    :linenos:
 
-    gcc -g -O0 10_profile_workload.c -o 10_profile_workload
-    valgrind --tool=callgrind ./10_profile_workload
+    gcc -g -O0 10-profile_workload.c -o 10-profile_workload
+    valgrind --tool=callgrind ./10-profile_workload
 
 Callgrind writes a file named ``callgrind.out.<pid>``. Replace ``<pid>`` with the number in the generated
 filename, then inspect the profile in the terminal or open it in KCachegrind if that viewer is installed:
 
 ..  code-block:: bash
-    :linenos:
 
     callgrind_annotate --auto=yes callgrind.out.<pid>
 
@@ -475,9 +444,8 @@ Cachegrind records instruction counts and simulated cache events. Run the same w
 result:
 
 ..  code-block:: bash
-    :linenos:
 
-    valgrind --tool=cachegrind --cachegrind-out-file=cachegrind.out ./10_profile_workload
+    valgrind --tool=cachegrind --cachegrind-out-file=cachegrind.out ./10-profile_workload
     cg_annotate --auto=yes cachegrind.out
 
 Inspect instruction counts and cache read/write misses, then use source annotations to find where they occur.
@@ -489,9 +457,8 @@ Massif: heap usage over time
 Massif samples heap allocation over the program's execution. Collect and print a report:
 
 ..  code-block:: bash
-    :linenos:
 
-    valgrind --tool=massif --massif-out-file=massif.out ./10_profile_workload
+    valgrind --tool=massif --massif-out-file=massif.out ./10-profile_workload
     ms_print massif.out
 
 Read the graph and snapshots to find when heap use peaks, then inspect the allocation tree around that point.
