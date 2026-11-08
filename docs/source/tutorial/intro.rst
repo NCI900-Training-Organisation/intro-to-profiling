@@ -151,10 +151,14 @@ The final installation/modulefile directories are chosen by the instructor.
 Other profiler builds
 ---------------------
 
-The repository retains ``build_lulesh_gprof.sh`` and
-``build_lulesh_hpctoolkit.sh`` for the corresponding tutorials. They have their
-own build requirements. The supplied VTune module is the application for this
-workshop; it is not assumed to contain gprof instrumentation.
+The GNU gprof lesson uses its own ``lulesh-gprof`` private module. Its helper,
+``build_lulesh_gprof.sh``, builds a matched baseline and ``-pg`` executable from
+the same source, with MPI on and OpenMP off. See :doc:`gprof` and the instructor
+notes in ``gprof/README.md``. The VTune executable is not the matched baseline
+for that comparison. Participants still use prebuilt applications.
+
+The repository also retains ``build_lulesh_hpctoolkit.sh`` for its corresponding
+tutorial and build requirements.
 
 .. admonition:: Key Points
    :class: hint

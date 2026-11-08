@@ -1,256 +1,268 @@
-GProf
-==========================
+GNU gprof
+=========
 
 .. admonition:: Overview
    :class: Overview
 
-    * **Tutorial:** 45 min
+   **Tutorial:** 45 minutes, after a 5–10 minute ARE/module check.
+
+   **Objectives:** collect a profile, distinguish call counts from sampled and
+   inferred times, interpret flat profiles and call graphs, measure profiling
+   overhead, and assess repeatability.
+
+Workshop materials
+------------------
+
+* :download:`Jupyter notebook <../../../gprof/gprof_lab.ipynb>` and companion
+  :download:`gprof_lab.py <../../../gprof/gprof_lab.py>` and
+  :download:`rank_run.py <../../../gprof/rank_run.py>` (keep together).
+* :download:`Slides (PDF) <../../../gprof/slides/NCI_Gprof_2026.pdf>` and
+  :download:`LaTeX source <../../../gprof/slides/NCI_Gprof_2026.tex>` with the
+  :download:`NCI logo <../../../gprof/slides/NCI_logo.png>`.
+* :download:`Instructor setup <../../../gprof/README.md>` and
+  :download:`private module template <../../../gprof/modulefiles/lulesh-gprof>`.
+
+The lesson uses classic GNU gprof, which is distinct from gprofng. Participants
+use prebuilt LULESH and follow the MPI workshop's concept, prediction, exercise
+and checkpoint format. All numerical illustrations are examples, not captured
+Gadi measurements.
+
+ARE and the private module
+--------------------------
+
+Submit ARE JupyterLab with **12 CPU cores on one node**, project ``vp91``, and
+storage ``gdata/vp91+scratch/vp91``. Under advanced options, set **Module
+directories** to ``/g/data/vp91/privatemodules`` and **Modules** to
+``lulesh-gprof``. The instructor must prepare and verify this proposed module
+before the workshop. Use the instructor's path if the module directory differs.
+
+The terminal equivalent is:
+
+.. code-block:: bash
 
-        **Objectives:**
-            #. Understand the basics of GProf and how to use it for profiling applications.
+   module use /g/data/vp91/privatemodules
+   module load lulesh-gprof
+   command -v lulesh2.0-gprof-baseline lulesh2.0-gprof mpirun gprof
 
+Configure modules before the kernel starts. A module loaded in another terminal
+cannot update the existing Python process. Run within the ARE allocation; no
+additional batch or interactive job is submitted by the notebook. Save profiles
+under ``/scratch/vp91/<username>/gprof-results/``.
 
-GProf (GNU Profiler) is a performance analysis tool for Unix-like operating systems. 
-It helps developers identify which parts of their code are consuming the most execution time, 
-allowing them to optimize performance-critical sections. GProf works by collecting and analyzing 
-data about function calls and execution times during the program's runtime.
+A matched build pair
+--------------------
 
+The instructor helper ``build_scripts/build_lulesh_gprof.sh`` creates two
+optimised builds from the same source and GCC/Open MPI environment:
 
-First, start an interactive job on the cluster 
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Executable
+     - Purpose
+   * - ``lulesh2.0-gprof-baseline``
+     - Uninstrumented timing with ``-O3 -g -DNDEBUG -fno-omit-frame-pointer``.
+   * - ``lulesh2.0-gprof``
+     - Same flags, plus ``-pg`` during compilation and linking.
+
+Both enable MPI and disable OpenMP. The core lesson uses one rank; the optional
+extension uses eight single-threaded application ranks. LULESH requires cubic
+rank counts, so twelve ranks are invalid. The 12-core allocation is a resource
+limit, not a requirement to occupy all cores.
+
+The GNU manual warns that glibc's ``mcount`` routine is not thread-safe. Keeping
+application work single-threaded avoids an OpenMP comparison that this tool
+cannot reliably support; runtime libraries may still have helper threads or
+uninstrumented work. Use the VTune lesson for OpenMP profiling. Its existing
+MPI/OpenMP executable is not the matched timing baseline for this lesson.
+
+Instructor preparation, within a suitable allocation and with GCC, Open MPI,
+CMake, Ninja and GNU gprof available:
+
+.. code-block:: bash
+
+   BUILD_JOBS=12 bash build_scripts/build_lulesh_gprof.sh /g/data/vp91/LULESH
+
+Outputs are under ``build/gprof-baseline/bin/`` and ``build/gprof/bin/``.
+Each build retains a manifest and compile commands. The module template uses
+the known source root ``/g/data/vp91/LULESH``; edit its dependency versions to
+match those used for compilation, then install it in the private module
+directory. Keep source, debug information and executable identity fixed during
+the class. Check permissions and runtime dependencies from a participant ARE
+session.
+
+What gprof counts, samples and estimates
+---------------------------------------
+
+``-pg`` adds function-entry hooks that record caller–callee arcs and call counts.
+Periodic program-counter observations separately estimate self time. The entry
+hooks do not measure every invocation's start-to-finish duration. Optimisation
+can remove or transform call boundaries through inlining and other changes.
+
+A call graph combines those inputs to estimate descendant cost. It assumes
+comparable average callee cost for each caller. A routine that quickly returns
+for one caller but does substantial work for another can violate that assumption.
+
+The profile is not a complete record of elapsed time, sleeping, blocked I/O,
+kernel work or shared-library activity. Interpret it within its scope.
 
-..  code-block:: bash
-    :linenos:
+Exercise 1: establish a baseline
+--------------------------------
 
-    qsub -I -q normal -P vp91 -l walltime=02:00:00 -l ncpus=48 -l mem=192GB -l wd
+Warm up ``lulesh2.0-gprof-baseline`` and repeat the same uninstrumented run three
+times. Start at ``-s 30 -i 200`` and calibrate to several seconds of calculation.
+Check actual iterations, origin energy and symmetry diagnostics. The iteration
+cap may not determine the actual iteration count.
 
-Then load the necessary modules to compile and run the application with gprof enabled.
+Record median and range. The notebook saves both LULESH's calculation time and
+launcher-to-exit time. These cover different intervals; use the same interval
+for comparisons. The latter includes startup and, for instrumented runs,
+profile-file writing.
 
-..  code-block:: bash
-    :linenos:
+Exercise 2: collect and inspect a flat profile
+---------------------------------------------
 
-    module load gcc/10.3.0
-    module load openmpi/4.1.7
-    module load cuda/12.9.0
-    module load papi/7.1.0
+In a fresh writable result directory inside the existing allocation:
 
+.. code-block:: bash
 
+   export OMP_NUM_THREADS=1 OMP_DYNAMIC=FALSE
+   export GMON_OUT_PREFIX="$PWD/gmon"
+   mpirun -np 1 --map-by slot:PE=1 --bind-to core \
+     lulesh2.0-gprof -s 30 -i 200
 
+The glibc profiling runtime writes ``prefix.PID`` on normal exit. Without a
+prefix, the default ``gmon.out`` may overwrite an earlier result. Abnormal
+termination can prevent output. The notebook wrapper also records the rank/PID
+mapping and checks that every expected profile exists.
 
-In this tutorial, we will use the **LULESH** application as an example to demonstrate how to use gprof for
-profiling. First, set the environment variables for the source and build directories
+Use the exact executable used for collection and the actual raw filename:
 
-..  code-block:: bash
-    :linenos:
+.. code-block:: bash
 
-    export SRCDIR=/scratch/vp91/$USER/LULESH
-
-    export INSTALLDIR=/scratch/vp91/$USER/LULESH/build
-
-where 
-
-* ``INSTALLDIR`` is the directory where the application will be installed (build)
-
-* ``SRCDIR`` is the directory where the source code of the application is located (git repository)
-
-Then compile the application with gprof enabled using CMake. Use the following command to configure 
-the build:
-
-..  code-block:: bash
-    :linenos:
-
-    cmake -G Ninja \
-        -DCMAKE_BUILD_TYPE=Debug \
-        -DMPI_CXX_COMPILER="$(which mpicxx)" \
-        -DWITH_MPI=On \
-        -DWITH_OPENMP=On \
-        -DCMAKE_INSTALL_PREFIX="$INSTALLDIR" \
-        -DCMAKE_CXX_FLAGS="-pg" \
-        "$SRCDIR"
-
-
-
-* ``-DCMAKE_CXX_FLAGS="-pg"`` is used to enable profiling with gprof. 
-
-
-Now execute the following command to run the application and generate the profiling data:
-
-..  code-block:: bash
-    :linenos:
-
-
-    ./lulesh2.0 -s 20
-
-This will generate a file named ``gmon.out`` in the current directory after the program completes.
-
-To ensure that the profiling data is saved in a specific location, set the environment variable
-``GMON_OUT_PREFIX`` before running the application. This variable specifies the prefix for the
-output files generated by gprof. gprof appends the process ID (PID) to this prefix, so the file
-is named ``gmon.out.<pid>`` rather than ``gmon.out``. This is also useful for MPI runs, where each
-rank would otherwise overwrite a single ``gmon.out``.
-
-..  code-block:: bash
-    :linenos:
-
-    export GMON_OUT_PREFIX=$INSTALLDIR/gmon.out
-
-    ./lulesh2.0 -s 20
-
-
-To analyze the profiling data, use the following command. When no prefix was set, the file is simply
-``gmon.out`` in the current directory:
-
-..  code-block:: bash
-    :linenos:
-
-    gprof ./lulesh2.0 gmon.out > profile.txt
-
-If you set ``GMON_OUT_PREFIX``, pass the full prefixed name (including the PID) instead:
-
-..  code-block:: bash
-    :linenos:
-
-    gprof ./lulesh2.0 $INSTALLDIR/gmon.out.<pid> > profile.txt
-
-This will create a file named ``profile.txt`` containing the profiling results, which can be
-viewed using any text editor or command-line tools like ``less`` or ``cat``.
-
-
-Making the profile readable
----------------------------
-
-The full ``profile.txt`` is hard to read with ``less`` or ``cat`` because gprof prints several pages
-of explanatory text between the tables. To get a clean view of just the hotspots, use ``gprof``
-directly with a couple of flags instead of dumping the whole file:
-
-..  code-block:: bash
-    :linenos:
-
-    gprof -b -p ./lulesh2.0 gmon.out | head -30
-
-* ``-b`` (brief) suppresses the long explanatory blurb that gprof prints between sections.
-
-* ``-p`` limits the output to the flat profile only (no call graph).
-
-* The flat profile is already sorted by self time, so piping to ``head -30`` shows the top
-  time-consuming functions first.
-
-If function names appear mangled (LULESH is C++), add ``-C`` / ``--demangle`` to print readable names:
-
-..  code-block:: bash
-    :linenos:
-
-    gprof -b -p -C ./lulesh2.0 gmon.out | head -30
-
-
-Flat Profile
-----------------
-
-The flat profile section of the gprof output provides a summary of the time spent in each function.
-
-GProf columns in the output file:
-
-1. **% time**
-
-    * The percentage of the total program runtime that was spent inside this function (not including functions it calls).
-
-    * Example: If your program ran for 10 seconds total and foo() spent 4 seconds in its own code, then % time = 40%.
-
-2. **cumulative seconds**
-
-    * A running total of the ``self seconds`` of this function plus every function listed above it in the table. It does **not** include time spent in the functions this one calls.
-
-    * Example: If the functions listed above foo() account for 5 seconds of self time and foo() itself took 4 seconds, then cumulative seconds = 9 seconds.
-
-3. **self seconds**
-
-    * The total time spent in this function alone, excluding time spent in functions it calls.
-
-    * Example: If foo() took 4 seconds and called bar() which took 3 seconds, then self seconds = 4 seconds.
-
-4. **calls**
-
-    * The number of times this function was called during the program's execution.
-
-    * Example: If foo() was called 5 times, then calls = 5.
-
-5. **self s/call**
-
-    * The average time spent in this function per call, calculated as self seconds divided by calls.
-
-    * Example: If foo() took 4 seconds and was called 5 times, then self ms/call = 800 ms/call.
-
-6. **total s/call**
-
-    * The average time spent in this function plus its descendants (the functions it calls) per call. This is based on the function's own self time plus its children's time, not on the flat-profile ``cumulative seconds`` column.
-
-    * Example: If foo() took 7 seconds in total (4 seconds in its own code plus 3 seconds in bar()) and was called 5 times, then total s/call = 1.4 s/call.
-
-7. **name**
-
-    * The name of the function being profiled.
-
-    * Example: If the function is named foo(), then name = foo().
-
-
-Call Graph
-----------------
-
-The call graph section of the gprof output provides a detailed view of function calls and their 
-relationships.
-
-1. **index**
-
-    * A unique identifier for each function in the call graph.
-
-    * Example: If foo() is the first function listed, it might have index = 1.
-
-2. **% time**
-    * The percentage of the total program runtime that was spent inside this function (not including functions it calls).
-
-    * Example: If your program ran for 10 seconds total and foo() spent 4 seconds in its own code, then % time = 40%.
-
-3. **self**
-
-    * The total time spent in this function alone, excluding time spent in functions it calls.
-
-    * Example: If foo() took 4 seconds and called bar() which took 3 seconds, then self seconds = 4 seconds.
-
-
-4. **children**
-
-    * The total time spent in functions called by this function.
-
-    * Example: If foo() called bar() which took 3 seconds, then children = 3 seconds.
-
-5. **called**
-
-    * The number of times this function was called during the program's execution.
-
-    * Example: If foo() was called 5 times, then calls = 5.
-
-    * Sometimes total calls and the number of calls made by the parent function are shown separately.
-
-6. **name**
-
-    * The name of the function being profiled.
-
-    * Example: If the function is named foo(), then name = foo().
-
-
-
-
+   gprof -i /path/to/lulesh2.0-gprof /path/to/gmon.PID
+   gprof -b --demangle -p /path/to/lulesh2.0-gprof /path/to/gmon.PID
+
+``-i`` describes raw profile records, ``-b`` suppresses explanatory prose,
+``-p`` selects the flat profile and ``--demangle`` prints readable C++ names.
+**GNU gprof's ``-C`` requests execution counts; it is not a demangling flag.**
+
+.. list-table:: Flat-profile fields
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Field
+     - Meaning
+   * - ``% time``
+     - Share of attributed sampled time in this function itself.
+   * - ``self seconds``
+     - Sampled time attributed to the function's own code.
+   * - ``cumulative seconds``
+     - Running sum of self times down the table, not descendants.
+   * - ``calls``
+     - Observed instrumented calls where available; blank is not zero.
+   * - ``self .../call``
+     - Self time divided by calls; read the printed units.
+   * - ``total .../call``
+     - Self plus estimated descendant cost per call.
+
+Inspect the stated sampling period. Very small or zero sampled times need
+careful interpretation; a frequently called function may be cheap or poorly
+resolved by sampling. Record observed hotspots instead of assuming a fixed
+LULESH ranking.
+
+Exercise 3: follow the call graph
+---------------------------------
+
+.. code-block:: bash
+
+   gprof -b --demangle -q /path/to/lulesh2.0-gprof /path/to/gmon.PID
+
+The primary row begins with ``[index]``; callers appear above and children
+below. Its ``% time`` includes **self and estimated descendants**. Parent and
+child costs overlap, so adding percentages is meaningless. The ``children``
+field is inferred from call counts and sampled costs, not an independently
+measured duration for each call path.
+
+Choose a function present in the report, identify a caller and child, and
+inspect the matching source at ``LULESH_SOURCE``. A source-text match does not
+provide per-line timing. The notebook's core exercise is function-level analysis.
+
+Exercise 4: measure profiling overhead
+--------------------------------------
+
+Warm up both builds, then alternate the order of three matched baseline/profile
+pairs. Keep input, placement and timing region unchanged. Check all numerical
+logs. Calculate the observed relative median difference:
+
+.. math::
+
+   100\left(\frac{\operatorname{median}(T_{pg})}
+   {\operatorname{median}(T_{base})}-1\right)\%.
+
+The result describes this instrumented build, workload and interval. Report
+spread and measurement variability, including a noisy or negative result.
+Do not interpret it as a universal profiler overhead percentage. Later code
+optimisations must be checked using repeated uninstrumented timings.
+
+Exercise 5: assess repeatability and sum profiles
+-------------------------------------------------
+
+Compare the three instrumented reports using absolute self times, calls and
+rankings. Confirm the same executable, input, process/thread configuration,
+actual iterations and numerical behaviour before merging. In a fresh directory:
+
+.. code-block:: bash
+
+   gprof -s /path/to/lulesh2.0-gprof \
+     /path/to/run1/gmon.PID /path/to/run2/gmon.PID
+   gprof -b --demangle -p /path/to/lulesh2.0-gprof gmon.sum
+
+The result sums time and calls; it is not an average run. Aggregation can help
+sampling resolution but does not remove instrumentation bias or call-graph
+assumptions. The notebook rejects incompatible or duplicate input profiles and
+retains the raw files.
+
+State an observation, a source-based hypothesis, one proposed change and a
+correctness/timing validation plan. If the explanation needs memory counters,
+OpenMP worker behaviour or blocked time, identify the missing measurement.
+
+Optional extension: eight MPI ranks
+-----------------------------------
+
+The notebook's ``RUN_MPI_EXTENSION`` switch enables eight ranks with one
+application thread each. It sets a rank-specific prefix before executing each
+application process, preserving PID through ``exec``. Expect eight nonempty
+``gmon.rank-NNN.PID`` files and eight rank manifests.
+
+Inspect individual rank profiles before summing them. Aggregation combines CPU
+costs and calls, not MPI elapsed time or communication time. Less sampled compute
+work can coexist with more waiting. At fixed ``-s``, the global mesh grows with
+rank count, so this extension demonstrates profile coverage rather than
+fixed-work speedup.
 
 .. admonition:: Key Points
    :class: hint
-   
-    #. GProf is a performance analysis tool for Unix-like operating systems.
-    #. It helps identify performance bottlenecks in code by analyzing function calls and execution times
-    #. To use GProf with a C++ application, compile the code with the `-pg` flag.
-    #. Run the application to generate a `gmon.out` file.
-    #. Analyze the data using the `gprof` command.
-    #. Flat Profile section summarizes time spent in each function.
-    #. Call Graph section provides a detailed view of function calls and their relationships.
-    
 
+   #. Compile and link the profiling build with ``-pg``; keep a matched baseline.
+   #. Separate counted calls, sampled self time and inferred descendant cost.
+   #. Read units, denominators, sampling resolution and call-graph assumptions.
+   #. Preserve raw files and the exact matching executable identity.
+   #. Measure overhead and validate hypotheses with uninstrumented timings.
+   #. Use one application thread per rank and unique files for MPI collection.
 
+References
+----------
 
+* `GNU gprof manual <https://sourceware.org/binutils/docs/gprof/>`_.
+* `Compilation <https://sourceware.org/binutils/docs/gprof/Compiling.html>`_,
+  `execution <https://sourceware.org/binutils/docs/gprof/Executing.html>`_, and
+  `output options <https://sourceware.org/binutils/docs/gprof/Output-Options.html>`_.
+* `Flat profiles <https://sourceware.org/binutils/docs/gprof/Flat-Profile.html>`_,
+  `call-graph primary rows <https://sourceware.org/binutils/docs/gprof/Primary.html>`_,
+  `sampling error <https://sourceware.org/binutils/docs/gprof/Sampling-Error.html>`_
+  and `child-time assumptions <https://sourceware.org/binutils/docs/gprof/Assumptions.html>`_.
+* `LLNL gprof guide <https://hpc.llnl.gov/software/development-environment-software/gprof>`_.
+* `LLNL LULESH <https://github.com/LLNL/LULESH>`_.
+* `NCI ARE training <https://nci900-training-organisation.github.io/learning-resources/Getting-Started/use-jupyterlab.html>`_.

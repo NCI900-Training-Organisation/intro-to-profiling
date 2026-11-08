@@ -16,7 +16,7 @@ C/C++ programs.
     - 5 minutes
     - 5 minutes
     - 10 minutes
-  * - GProf
+  * - GNU gprof
     - 30 minutes
     - 15 minutes
     - 45 minutes

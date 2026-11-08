@@ -1,6 +1,27 @@
 Modules
 =======
 
+GNU gprof workshop
+------------------
+
+Use the instructor-prepared ``lulesh-gprof`` private module for the matched
+baseline and instrumented executables:
+
+.. code-block:: bash
+
+   module use /g/data/vp91/privatemodules
+   module load lulesh-gprof
+   command -v lulesh2.0-gprof-baseline lulesh2.0-gprof mpirun gprof
+
+The proposed module supplies the matching GCC/Open MPI runtime and must make
+GNU ``gprof`` available. Participants do not need compiler/build tools. Both
+application builds have MPI enabled and OpenMP disabled.
+
+In ARE, request 12 cores on one node, storage ``gdata/vp91+scratch/vp91``,
+**Module directories** ``/g/data/vp91/privatemodules``, and **Modules**
+``lulesh-gprof`` before launching the kernel. See :doc:`tutorial/gprof` for
+preparation and collection instructions.
+
 Intel VTune workshop
 --------------------
 
