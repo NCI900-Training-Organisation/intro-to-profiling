@@ -13,9 +13,8 @@ GNU gprof
 Workshop materials
 ------------------
 
-* :download:`Jupyter notebook <../../../gprof/gprof_lab.ipynb>` and companion
-  :download:`gprof_lab.py <../../../gprof/gprof_lab.py>` and
-  :download:`rank_run.py <../../../gprof/rank_run.py>` (keep together).
+* :download:`Jupyter notebook <../../../gprof/gprof_lab.ipynb>`: the first three
+  exercises, using direct shell commands without companion Python helpers.
 * :download:`Slides (PDF) <../../../gprof/slides/NCI_Gprof_2026.pdf>` and
   :download:`LaTeX source <../../../gprof/slides/NCI_Gprof_2026.tex>` with the
   :download:`NCI logo <../../../gprof/slides/NCI_logo.png>`.
@@ -115,10 +114,10 @@ times. Start at ``-s 30 -i 200`` and calibrate to several seconds of calculation
 Check actual iterations, origin energy and symmetry diagnostics. The iteration
 cap may not determine the actual iteration count.
 
-Record median and range. The notebook saves both LULESH's calculation time and
-launcher-to-exit time. These cover different intervals; use the same interval
-for comparisons. The latter includes startup and, for instrumented runs,
-profile-file writing.
+Record median and range from LULESH's printed ``Elapsed time`` in the saved logs.
+This calculation interval differs from launcher-to-exit time, which also includes
+startup and, for instrumented runs, profile-file writing. Use the same interval
+for comparisons.
 
 Exercise 2: collect and inspect a flat profile
 ---------------------------------------------
@@ -132,10 +131,12 @@ In a fresh writable result directory inside the existing allocation:
    mpirun -np 1 --map-by slot:PE=1 --bind-to core \
      lulesh2.0-gprof -s 30 -i 200
 
-The glibc profiling runtime writes ``prefix.PID`` on normal exit. Without a
-prefix, the default ``gmon.out`` may overwrite an earlier result. Abnormal
-termination can prevent output. The notebook wrapper also records the rank/PID
-mapping and checks that every expected profile exists.
+The glibc profiling runtime appends the process ID to this prefix and writes
+``gmon.PID`` on normal exit. Abnormal termination can prevent output. The notebook
+lists these files and asks you to select the actual filename using
+``%env GMON_FILE=gmon.PID``. Its report cells then pass ``"$GMON_FILE"`` to gprof.
+Select the new file after repeating collection; passing several files would sum
+their profiles.
 
 Use the exact executable used for collection and the actual raw filename:
 
@@ -221,8 +222,9 @@ actual iterations and numerical behaviour before merging. In a fresh directory:
 
 The result sums time and calls; it is not an average run. Aggregation can help
 sampling resolution but does not remove instrumentation bias or call-graph
-assumptions. The notebook rejects incompatible or duplicate input profiles and
-retains the raw files.
+assumptions. Retain the raw files and avoid selecting a profile more than once.
+This exercise and the following MPI extension go beyond the three-exercise
+notebook.
 
 State an observation, a source-based hypothesis, one proposed change and a
 correctness/timing validation plan. If the explanation needs memory counters,
@@ -231,10 +233,12 @@ OpenMP worker behaviour or blocked time, identify the missing measurement.
 Optional extension: eight MPI ranks
 -----------------------------------
 
-The notebook's ``RUN_MPI_EXTENSION`` switch enables eight ranks with one
-application thread each. It sets a rank-specific prefix before executing each
-application process, preserving PID through ``exec``. Expect eight nonempty
-``gmon.rank-NNN.PID`` files and eight rank manifests.
+For eight ranks with one application thread each, use a separate output prefix
+for each rank so that its files can be identified by rank as well as PID. Set
+``GMON_OUT_PREFIX`` inside each rank's launch command using its Open MPI rank
+number (``OMPI_COMM_WORLD_RANK``). The glibc profiling runtime appends the process
+PID to the prefix. Check that all eight ranks exit normally and produce nonempty
+profiles before analysing them.
 
 Inspect individual rank profiles before summing them. Aggregation combines CPU
 costs and calls, not MPI elapsed time or communication time. Less sampled compute

@@ -6,6 +6,7 @@ binary identity and profile filenames; no jobs or modules are launched here.
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -60,6 +61,40 @@ class Lab:
     size: int = 30
     iterations: int = 200
 
+    def check_environment(self):
+        """Check the ARE runtime and save the environment and binary identities."""
+        session = check_session(self.allocated_cores)
+        self.validate()
+        if not shutil.which("gprof"):
+            raise RuntimeError("gprof is missing; configure lulesh-gprof in ARE Modules and relaunch")
+        versions = {}
+        for tool in ("mpirun", "gprof"):
+            completed = subprocess.run([tool, "--version"], text=True, stdout=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT, check=True)
+            versions[tool] = completed.stdout
+            print(completed.stdout.splitlines()[0])
+        if not any(name in versions["mpirun"] for name in ("Open MPI", "OpenRTE")):
+            raise RuntimeError("The lesson's binding options and rank wrapper require Open MPI")
+        source = os.environ.get("LULESH_SOURCE")
+        environment = {"session": session, "versions": versions,
+                       "modules": os.environ.get("LOADEDMODULES"), "source": source,
+                       "baseline": str(self.baseline), "baseline_sha256": sha256(self.baseline),
+                       "instrumented": str(self.instrumented),
+                       "instrumented_sha256": sha256(self.instrumented)}
+        self.results.mkdir(parents=True, exist_ok=True)
+        (self.results / "environment.json").write_text(json.dumps(environment, indent=2))
+        print("Baseline:", self.baseline)
+        print("Instrumented:", self.instrumented)
+        print("Source:", source)
+        print("Results:", self.results)
+        manifest = os.environ.get("LULESH_GPROF_BUILD_INFO")
+        if manifest and Path(manifest).is_file():
+            print(Path(manifest).read_text())
+        else:
+            print("Ask the instructor for the matching build flags and source revision.")
+        if not source or not Path(source).is_dir():
+            print("Source inspection is optional until the instructor supplies the matching source path.")
+
     def validate(self):
         for name in ("allocated_cores", "ranks", "size", "iterations"):
             value = getattr(self, name)
@@ -76,6 +111,8 @@ class Lab:
         if self.ranks > min(limits):
             raise ValueError("MPI ranks exceed this lesson's allocation; one application thread per rank")
         for name in ("baseline", "instrumented"):
+            if not getattr(self, name):
+                raise FileNotFoundError(f"Missing {name} executable on PATH; configure lulesh-gprof in ARE Modules and relaunch")
             path = Path(getattr(self, name)).expanduser().resolve()
             if not path.is_file() or not os.access(path, os.X_OK):
                 raise FileNotFoundError(f"Missing {name} executable: {path}; load lulesh-gprof before ARE starts")
@@ -146,6 +183,69 @@ class Lab:
         if not profile and list(directory.glob("gmon*")):
             raise RuntimeError(f"Baseline emitted gmon data: check that it was built without -pg: {directory}")
         return record
+
+
+def application_times(records):
+    """Read comparable LULESH calculation times, rejecting missing timings."""
+    values = [record["application_seconds"] for record in records]
+    if any(value is None or value <= 0 for value in values):
+        raise RuntimeError("Read run.log: LULESH calculation time was absent or nonpositive")
+    return values
+
+
+def display_graph(graph_path, show_all=False):
+    """Render a saved gprof call graph in Jupyter without rerunning the application."""
+    if graph_path is None or not Path(graph_path).is_file():
+        print("Call-graph report not found. Run the table cell or select a saved rank-000-graph.txt report.")
+        return
+    converter_available = importlib.util.find_spec("gprof2dot") is not None
+    dot_executable = shutil.which("dot")
+    if not converter_available or dot_executable is None:
+        print("Diagram not generated; the call-graph table is still available.")
+        if not converter_available:
+            print("Install gprof2dot in this kernel with %pip install gprof2dot, then rerun this cell.")
+        if dot_executable is None:
+            print("Graphviz's dot executable is missing from PATH. Configure Graphviz in the ARE launch environment and relaunch if needed.")
+        return
+    graph_path = Path(graph_path)
+    dot_path = graph_path.with_suffix(".dot")
+    svg_path = graph_path.with_suffix(".svg")
+    command = [sys.executable, "-m", "gprof2dot", "-f", "prof", "-s"]
+    if show_all:
+        command += ["-n", "0", "-e", "0"]
+    command += [str(graph_path), "-o", str(dot_path)]
+    try:
+        subprocess.run(command, check=True, capture_output=True, text=True)
+        subprocess.run([dot_executable, "-Tsvg", str(dot_path), "-o", str(svg_path)],
+                       check=True, capture_output=True, text=True)
+    except (subprocess.CalledProcessError, OSError) as error:
+        print("Diagram generation failed; use the text report and check the diagnostic below.")
+        print(getattr(error, "stderr", None) or str(error))
+        return
+    from IPython.display import SVG, display
+    display(SVG(filename=str(svg_path)))
+    print("Saved diagram:", svg_path)
+    print("Graph description:", dot_path)
+
+
+def find_function(name, graph_path):
+    """Show matching report lines and locations in the module's LULESH source."""
+    print("Report lines containing", name)
+    for line in Path(graph_path).read_text().splitlines():
+        if name in line:
+            print(line)
+    source = os.environ.get("LULESH_SOURCE")
+    if not source or not Path(source).is_dir():
+        print("Obtain the matching source directory from the instructor; use the graph meanwhile.")
+        return
+    matches = 0
+    for path in sorted(Path(source).glob("*.cc")):
+        for number, line in enumerate(path.read_text(errors="replace").splitlines(), 1):
+            if name in line:
+                print(f"{path}:{number}: {line.strip()}")
+                matches += 1
+    if not matches:
+        print("Try the unmangled base name of a function visible in your report.")
 
 
 def profile_files(record, rank=None):
